@@ -1,0 +1,22 @@
+# Dependency directory
+node_modules/
+
+# Local configuration files
+.env
+.env.local
+
+# SQLite Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Test generated reports
+scratch/test_report.xlsx
+
+# System logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
