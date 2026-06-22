@@ -25,7 +25,16 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Launch Telegram Bot (retry on 409 Conflict — Telegram needs ~60s to release stale connections)
+  // 3. Launch Telegram Bot
+  // deleteWebhook clears any stale long-poll or webhook connection from a previous crashed instance.
+  // This is the standard fix for persistent 409 Conflict errors.
+  try {
+    await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+    console.log('🔗 Cleared any stale Telegram connections.');
+  } catch (err) {
+    console.warn('⚠️  Could not clear webhook (non-fatal):', err.message);
+  }
+
   let launched = false;
   while (!launched) {
     try {
@@ -34,7 +43,7 @@ async function main() {
       launched = true;
     } catch (err) {
       if (err.response && err.response.error_code === 409) {
-        console.warn('⚠️  409 Conflict: another instance is still connected to Telegram. Retrying in 65 seconds...');
+        console.warn('⚠️  409 Conflict: retrying in 65 seconds...');
         await new Promise((resolve) => setTimeout(resolve, 65000));
       } else {
         console.error('❌ Failed to launch Telegram Bot:', err);
