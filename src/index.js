@@ -25,13 +25,22 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Launch Telegram Bot
-  try {
-    await bot.launch();
-    console.log('🤖 Telegram Bot launched successfully and listening for events.');
-  } catch (err) {
-    console.error('❌ Failed to launch Telegram Bot:', err);
-    process.exit(1);
+  // 3. Launch Telegram Bot (retry on 409 Conflict — Telegram needs ~60s to release stale connections)
+  let launched = false;
+  while (!launched) {
+    try {
+      await bot.launch();
+      console.log('🤖 Telegram Bot launched successfully and listening for events.');
+      launched = true;
+    } catch (err) {
+      if (err.response && err.response.error_code === 409) {
+        console.warn('⚠️  409 Conflict: another instance is still connected to Telegram. Retrying in 65 seconds...');
+        await new Promise((resolve) => setTimeout(resolve, 65000));
+      } else {
+        console.error('❌ Failed to launch Telegram Bot:', err);
+        process.exit(1);
+      }
+    }
   }
 
   // Graceful shutdown handling
